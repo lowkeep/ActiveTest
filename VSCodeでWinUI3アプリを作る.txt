@@ -1,0 +1,201 @@
+VSCodeでWinUI3アプリを作る
+
+https://learn.microsoft.com/ja-jp/windows/apps/winui/winui3/create-your-first-winui3-app を参考に
+
+- インストール
+	- .NET SDKのインストール【済】
+	  https://dotnet.microsoft.com/ja-jp/download/dotnet/7.0 から
+	  「SDK 7.0.306」の「Windows」の「インストーラー」の「x64」をダウンロードしてインストールする。
+	- Windows App SDKのインストール【済】
+	  https://learn.microsoft.com/ja-jp/windows/apps/windows-app-sdk/downloads?source=recommendations から
+	  「Windows App SDK 1.3.3」の最新版の「インストーラー (x64)」をダウンロードしてインストールする。
+	  コマンドプロンプトから実行すると結果が見れて安心感がある。
+	- テンプレートのインストール【済】
+	  dotnet new search winui で表示された、公式がないので、VijayAnand.WinUITemplatesをインストールする。
+	  dotnet new install VijayAnand.WinUITemplates 
+	  dotnet new list でインストールされているテンプレートを確認できる。
+	  ※EpoxyはWinUI3は「ビルド・実行する場合は、dotnet build ではなく、Visual Studioでソリューションを開く必要があります。」なので使わない。
+	- VSCodeのインストール【済】
+	  ダウンロードして解凍してポータブル化
+	- VSCodeの設定【済】
+	  起動して以下の拡張機能をインストール。
+	  Japanese Language Pack for Visual Studio Codems-ceintl.vscode-language-pack-jawindow閉じるイベントs 
+	  C# ms-dotnettools.csharp 、
+	  Auto-Using for C#（Fudge.auto-using）、
+	  C# XML Documentation Comments k--kato.docomment 
+	  NuGet Package Manager GUI aliasadidev.nugetpackagemanagergui 
+	  .NET Core Test Explorer formulahendry.dotnet-test-explorer 
+- ソリューション・プロジェクト作成
+	- ソリューションフォルダとソリューションファイルの作成
+	  ソリューションのフォルダを作成し、Powershellでそのフォルダに移動する。
+	  dotnet new sln でソリューションファイルを作成する。そのフォルダ名がソリューション名になる。
+	- プロジェクト作成【済】
+	  以下のコマンドを実行。-oにはプロジェクト名に置き換える。
+	  dotnet new winui -o winui3 
+	  作成したプロジェクト配下に.sln ファイルもできているので削除する。
+	- ソリューションにプロジェクトを登録
+	  dotnet sln add プロジェクトのフォルダ名 でソリューションにプロジェクトを登録する。
+	- ソリューションファイルの変更
+	  SolutionConfigurationPlatforms とProjectConfigurationPlatforms に
+	  Debug|Any CPU  やRelease|Any CPU というところがあるので、
+	  Debug|x64  やRelease|x64 に修正する（64bitで作るのなら）。
+	- プロジェクトファイルの変更
+	  csprojファイルのPropertyGroup 配下に
+	  <WindowsPackageType>None</WindowsPackageType> 
+	  <!-- <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained> --> 　←通常はコメントでよい
+	  <Configuration>Debug</Configuration>  
+	  <Platform>win10-x64</Platform> を追加（64ビットの場合）
+	  <Platforms> はx64 だけにする、
+	  <RuntimeIdentifiers> はwin10-x64 だけにする。
+	  ※VSCodeで開発するときはWindowsAppSDKSelfContained はコメントにしておく。
+	  　Publishするときだけ、コメント解除し、WindowsPackageType をコメント化する。
+	- VSCodeでフォルダを開く【済】
+	  フォルダを開くでソリューションがあるフォルダを開く。
+	  App.xaml.cs の private Window m_window; を
+	  private Window? m_window; に修正。
+	- launch.jsonの作成
+	  左側でデバッグアイコンをクリックし、「launch.jsonファイルを作成します。」リンクをクリックする。
+	  コマンドパレットに選択肢が表示さるので、.NET 5+ and .NET Core をクリックする。
+	  launch.jsonが開くので、右下にある「構成の追加...」をクリックし、
+	  .NET: Launch .NET Core Console App をクリックする。★20240812：なくなってて、.NET: Launch Executable file (Console) を選んだ
+	  テンプレートが展開される
+	  "program" の値を以下のように修正。プロジェクト名はdotnet new winui -o で指定した名前。
+	  "${workspaceFolder}/【プロジェクト名】/bin/x64/Debug/net7.0-windows10.0.19041.0/win10-x64/【プロジェクト名】.exe" 
+	  保存して閉じる。
+	- tasks.jsonの作成
+	  Ctrl+Shift+Pを押下してコマンドパレットを起動し、tasks と入力する。
+	  候補が表示されるので、タスク：既定のビルドタスクを構成する をクリックし、
+	  テンプレートからtasks.jsonを生成 をクリックし、
+	  .NET Core .NET Core ビルドコマンドの実行 をクリックする。
+	- 実行
+	  F5で動く。ソースにブレイクポイントを設定すればそこで止まる
+	- 配布用ファイルの作成
+	  csprojファイルのWindowsAppSDKSelfContained をコメント解除し、
+	  WindowsPackageType  をコメント化して保存する。
+	  プロジェクトフォルダ（csprojファイルのあるフォルダ）で以下のコマンドを実行する。
+	  dotnet publish -c Release -r win-x64 --sc -p:Platform=x64 
+	  bin\Release\net7.0-windows10.0.19041.0\win-x64\publish こんな感じのフォルダができて、
+	  直下のプロジェクト名.exeをダブルクリックで起動する。publishフォルダを配布すれば、必要なものも含まれてるので、Runtimeとかインストールされてなくても起動する。
+	- データグリッドを追加
+	  対象プロジェクトのcsprojのあるフォルダで以下を実行する。
+	  dotnet add package CommunityToolkit.WinUI.UI.Controls --version 7.1.2  
+	   MainWindow.xamlに以下を追加。（上の方の似てるところに）
+	  xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls" 
+	   StackPanelに以下を追加する。
+	  <controls:DataGrid x:Name="WinUI3DataGrid" />  
+	    ※参考https://devlog.grapecity.co.jp/winui-3-datagrid-1/
+	    https://learn.microsoft.com/ja-jp/windows/communitytoolkit/controls/datagrid
+	  
+	  ---↓は試し中---
+	  
+	- テストプロジェクトの追加
+	  ソリューションファイル（【ソリューション名】.slnファイル）があるフォルダに移動し、
+	  dotnet new xunit -o 【テストプロジェクト名】  でテストプロジェクトを作成する。
+	  【テストプロジェクト名】は、【対象プロジェクト名】＋.Tests が無難そう。
+	- テストプロジェクトのcsprojファイルの修正
+	  「テスト対象プロジェクト」のTargetFramework をコピーして、「テストプロジェクト」のTargetFrameworkに張り付けて保存する。
+	  <PropertyGroup>配下に以下を追加する。
+	  <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling> 
+	- テストプロジェクトのプロジェクト参照の追加
+	  以下のコマンドでテストプロジェクトがテスト対象プロジェクトを参照できるようにする。
+	  dotnet add .\【テストプロジェクト名】\【テストプロジェクト名】.csproj reference .\【プロジェクト名】\【プロジェクト名】.csproj 
+	- テストプロジェクトをソリューションに追加
+	  以下のコマンドでテストプロジェクトをソリューションに追加する。
+	  dotnet sln add 【テストプロジェクト名】 
+	- NuGetパッケージを追加する
+	  テストプロジェクトフォルダに移動して、以下のコマンドを実行する。
+	  dotnet add package Xunit.StaFact --version 1.1.11 
+	- ...画面以外のクラスはテストできる。テストのcsprojに以下を追加。どれが有効なのかよくわからん
+	  <!-- 追加 -->
+	      <WindowsAppContainer>true</WindowsAppContainer>
+	      <!--
+	      <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
+	      <EnableMsixTooling>true</EnableMsixTooling>
+	      <WindowsAppContainer>true</WindowsAppContainer>
+	      -->
+	      <!--
+	      <WindowsPackageType>None</WindowsPackageType>
+	      <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
+	  -->
+
+---
+
+	- ソリューションファイルの変更
+	  ソリューションファイルの{73F396FD-5E78-4403-ABD1-6009F9CD4034}.Debug|Any CPU.ActiveCfg = Debug|x86
+	  みたいなやつの末尾をx64に全部変える
+	  →x64でビルドされるので、出力ファイルを見てlaunch.jsonのprogramを出力するexeに書き換える。
+	  
+	  ★ミニマムのプロジェクトは↓が参考になる（うまくいかない）
+	  https://zenn.dev/nin_neko/articles/ecb16042f04c01
+	  
+	  ★publishするとエラーが消えるかも
+	  dotnet publish -c Release -r win-x64 --sc -p:Platform=x64 
+	  
+- Windows Community Toolkitの参照を追加【済】
+  csprojのあるフォルダでdotnet add package CommunityToolkit.WinUI.UI.Controls --version 7.1.2 を実行
+- MainWindow.xamlにCommunityToolkit.WinUI.UI.Controls」への参照を設定【済】
+  MainWindow.xamlに
+  xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls" を追加
+- DataGridの追加【済】
+  StackPanelに以下を追加
+  <controls:DataGrid x:Name="WinUI3DataGrid" /> 
+  ※参考https://devlog.grapecity.co.jp/winui-3-datagrid-1/
+  https://learn.microsoft.com/ja-jp/windows/communitytoolkit/controls/datagrid
+  
+  
+- やること
+  csproj追加<WindowsPackageType>None</WindowsPackageType> 
+  <Configuration>Debug</Configuration> 
+  <Platform>win10-x64</Platform> 
+  csproj変更<Platforms>x86;x64;arm64</Platforms> x64だけに
+  <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers> もwin10-x64
+  slnのDebug|x64 
+  ？csprojに<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained> を
+  追加してdotnet publish -c Release -r win-x64 --sc -p:Platform=x64 
+  こっちdotnet publish -c Release -p:WindowsAppSDKSelfContained=true 
+  
+- ソリューションの作成【済】
+  ソリューションを作りたいフォルダの親フォルダに移動し、
+  作りたいソリューション名のフォルダを作る。
+  mkdir 【ソリューション名】 
+  作ったフォルダにcd 【ソリューション名】 で移動し、
+  dotnet new sln でソリューションを作成する。（【ソリューション名】.slnファイルができる）
+- プロジェクトの作成【済】
+  ソリューションファイル（【ソリューション名】.slnファイル）があるフォルダに移動し、
+  dotnet new maui -o 【プロジェクト名】 でプロジェクトを作成する。
+  プロジェクトフォルダにソリューションファイルが含まれているので、削除する。
+  del .\【プロジェクト名】\【プロジェクト名】.sln 
+- テストプロジェクトの作成【済】
+  ソリューションファイル（【ソリューション名】.slnファイル）があるフォルダに移動し、
+  dotnet new xunit -o 【テストプロジェクト名】 でテストプロジェクトを作成する。
+- プロジェクトファイルの修正【済】
+  【プロジェクト名】.csproj ファイルをテキストエディタで開き、TargetFrameworks タグを修正する。
+  net6.0-windows10.0.19041.0 こんな感じの記述があると思うので、それをコピーし、
+  <TargetFrameworks>【上でコピーしたターゲットフレームワーク】</TargetFrameworks> だけにする。
+  また、PropertyGroup 配下に以下を追加する。
+  <WindowsPackageType>None</WindowsPackageType> 
+- テストプロジェクトファイルの修正【済】
+  【テストプロジェクト名】.csproj ファイルをテキストエディタで開き、TargetFrameworks タグを修正する。
+  net6.0になってると思うので、【プロジェクト名】.csprojで変更したターゲットフレームワークをコピーし、
+  <TargetFrameworks>【コピーしたターゲットフレームワーク】</TargetFrameworks> に修正する。
+- ソリューションにプロジェクトとテストプロジェクトを追加する。【済】
+  dotnet sln add 【プロジェクト名】 
+  dotnet sln add 【テストプロジェクト名】 
+- テストプロジェクトからプロジェクトへの参照を追加する。【済】
+  dotnet add .\【テストプロジェクト名】\【テストプロジェクト名】.csproj reference .\【プロジェクト名】\【プロジェクト名】.csproj 
+- VSCodeでソリューションフォルダを開く【済】
+  VSCodeで、ファイル->フォルダーを開くをクリックし、ソリューションフォルダを開く。
+  作成者を信頼しますかは「はい、作成者を信頼します」をクリックする。
+  Required assets to build and debug are missing from '【ソリューションフォルダ名】'. Add them? 
+  と聞かれたら、Not Now をクリックする。
+  左側でデバッグアイコンをクリックし、launch.jsonファイルを作成します リンクをクリック
+  選択肢が表示されるので、.NET 5+ and .NET Core をクリックする。
+  プロジェクトとテストプロジェクトの選択しが表示されるので、プロジェクトを選択する。
+  launch.jsonが作られて開く。
+  "name": ".NET Core Launch (console)" の
+  preLaunchTask を build から dotnet-meteor: Build に修正する。
+  F5キーを押すとビルドが動くが画面はまだ表示されない。
+  launch.json のprogram が 【プロジェクト名】.dll になっているので、【プロジェクト名】.exe に修正する。
+  エクスプローラーを開いて、プロジェクトフォルダ配下をbin->Debug とたどっていき（さらにたどる）、プロジェクト名.exe を探して、このパスが正しいか確認する。
+  修正後F5キーを押すとビルドが動いてMAUIのサンプルページが表示される。
+  （コンパイルエラーも消える）
